@@ -134,7 +134,7 @@ export function buildRepoSummary(repo: ParsedRepo): string {
     `=== KEY FILE CONTENTS ===`,
   ]
 
-  // Priority files — trimmed for production speed (Vercel 60s limit)
+  // Priority files to always include in full
   const priority = ["package.json", "tsconfig.json", "next.config.ts", "next.config.js",
     "tailwind.config.ts", "middleware.ts", "middleware.js"]
 
@@ -142,16 +142,16 @@ export function buildRepoSummary(repo: ParsedRepo): string {
     const f = repo.files.find(f => f.path === p || f.path.endsWith("/" + p))
     if (f) {
       lines.push(`--- ${f.path} ---`)
-      lines.push(f.content.slice(0, 1500))  // was 3000
+      lines.push(f.content.slice(0, 3000))
       lines.push("")
     }
   }
 
-  // Remaining files — fewer, smaller slices
+  // Remaining files (truncated)
   const rest = repo.files.filter(f => !priority.some(p => f.path === p || f.path.endsWith("/" + p)))
-  for (const f of rest.slice(0, 25)) {  // was 40
+  for (const f of rest.slice(0, 40)) {
     lines.push(`--- ${f.path} ---`)
-    lines.push(f.content.slice(0, 800))  // was 1500
+    lines.push(f.content.slice(0, 1500))
     lines.push("")
   }
 
