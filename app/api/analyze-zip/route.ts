@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { parseZipBuffer } from "@/lib/zip"
 import { generateCurriculum } from "@/lib/analyzer"
 
-export const maxDuration = 120
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {

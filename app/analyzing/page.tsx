@@ -62,10 +62,24 @@ export default function AnalyzingPage() {
           }
         }
 
-        res = await fetch("/api/analyze", {
+        // Step 1: fetch repo files (~5-15s, separate request to stay under 60s limit)
+        const prefetchRes = await fetch("/api/prefetch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ githubUrl, githubToken }),
+        })
+        if (!prefetchRes.ok) {
+          const d = await prefetchRes.json()
+          setError(d.error ?? "Failed to fetch repo. Check the URL and try again.")
+          return
+        }
+        const { summary, meta } = await prefetchRes.json()
+
+        // Step 2: Claude analysis (~15-25s with Haiku, separate request)
+        res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ repoSummary: summary, repoMeta: meta }),
         })
       }
 

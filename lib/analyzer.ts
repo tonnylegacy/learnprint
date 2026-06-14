@@ -47,7 +47,7 @@ Schema:
 
 LESSONS — "content" field:
 - 3-5 paragraphs. Explain what this concept is, then show exactly how the learner used it in their project.
-- Always name the specific file (e.g. "In your `auth.js`...") and quote actual code inline using backticks.
+- Always name the specific file (e.g. "In your auth.js...") and quote actual code inline using backticks.
 - Tone: "You built X — here's what it actually does and why it matters."
 - NEVER include the challenge answer in the lesson content.
 
@@ -75,9 +75,18 @@ GOOD instructions (do this): "Your color system uses CSS variables for theming. 
 ═══ STACK DETECTION ═══
 Only include technologies you actually see evidence of in the code. Do not guess or invent.`
 
+// Called by /api/analyze-zip (zip upload path still uses ParsedRepo directly)
 export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> {
   const repoSummary = buildRepoSummary(repo)
+  return generateCurriculumFromSummary(repoSummary, repo.owner, repo.repo)
+}
 
+// Called by /api/analyze (GitHub path — summary pre-fetched by /api/prefetch)
+export async function generateCurriculumFromSummary(
+  repoSummary: string,
+  owner: string,
+  repoName: string
+): Promise<Curriculum> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5",
     max_tokens: 8000,
@@ -124,7 +133,7 @@ export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> 
 
   return {
     id: crypto.randomUUID(),
-    projectUrl: `https://github.com/${repo.owner}/${repo.repo}`,
+    projectUrl: `https://github.com/${owner}/${repoName}`,
     totalXp,
     generatedAt: new Date().toISOString(),
     ...parsed,
