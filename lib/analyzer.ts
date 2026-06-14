@@ -51,7 +51,7 @@ LESSONS — "content" field:
 - Tone: "You built X — here's what it actually does and why it matters."
 - NEVER include the challenge answer in the lesson content.
 
-MODULES — aim for 5-7 modules, 2-3 lessons each. Progress from foundational → advanced.
+MODULES — 4-5 modules, 2 lessons each (max 10 lessons total). Keep lessons tight. Progress from foundational → advanced.
 
 ═══ CHALLENGE RULES (read carefully) ═══
 
@@ -89,7 +89,7 @@ export async function generateCurriculumFromSummary(
 ): Promise<Curriculum> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 8000,
+    max_tokens: 12000,
     messages: [
       {
         role: "user",
