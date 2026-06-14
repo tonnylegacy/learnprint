@@ -18,7 +18,9 @@ RULES:
 - Lessons should teach progressively — start with the most foundational concepts
 - The tone should be encouraging: "You built X — here's what it actually does"
 - Be specific: reference actual file paths and function names from their code
-- Group related concepts into modules (aim for 4-8 modules, 2-4 lessons each)
+- Group related concepts into modules (aim for 4-6 modules, 2-3 lessons each — keep it concise)
+- Keep lesson content under 150 words each — quality over length
+- Keep challenge instructions under 60 words each
 
 CRITICAL — CHALLENGE DESIGN (this is the most important rule):
 The explanation and the challenge must test DIFFERENT things. The explanation teaches the concept using their existing code. The challenge asks the user to APPLY that concept in a new, slightly different scenario they haven't seen yet.
@@ -88,8 +90,8 @@ export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> 
   const repoSummary = buildRepoSummary(repo)
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 16000,
+    model: "claude-haiku-4-5",  // faster on Vercel Hobby 60s limit; sonnet for local dev
+    max_tokens: 8000,
     // No thinking — this is structured JSON generation, not reasoning.
     // Thinking blocks consume token budget and leave nothing for the output.
     messages: [
