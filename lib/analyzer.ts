@@ -33,6 +33,8 @@ Rules for every challenge:
 3. The hint should nudge toward the right approach without giving the answer
 4. The solution should be meaningfully different from the starterCode (not just filling in one word)
 5. Never put the answer inside the explanation content — teach the concept, don't give the solution
+6. The "instructions" field must NEVER contain: exact variable names from the solution, specific values to copy, or step-by-step procedures that lead directly to the answer. Instructions should describe the GOAL and the CONTEXT, not the method. Bad: "Add --gold: #f5a623 to :root". Good: "Your site uses a color variable system. Add a brand accent color that works in both light and dark themes, then apply it to the .highlight element."
+7. The "question" field should be a single clear sentence describing what to accomplish — not how to do it
 
 Return ONLY valid JSON matching this exact TypeScript interface — no markdown, no explanation:
 
