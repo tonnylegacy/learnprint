@@ -17,9 +17,22 @@ RULES:
 - Every lesson's codeSnippet must be real code from their files
 - Lessons should teach progressively — start with the most foundational concepts
 - The tone should be encouraging: "You built X — here's what it actually does"
-- Challenges should be solvable with the knowledge from the lesson
 - Be specific: reference actual file paths and function names from their code
 - Group related concepts into modules (aim for 4-8 modules, 2-4 lessons each)
+
+CRITICAL — CHALLENGE DESIGN (this is the most important rule):
+The explanation and the challenge must test DIFFERENT things. The explanation teaches the concept using their existing code. The challenge asks the user to APPLY that concept in a new, slightly different scenario they haven't seen yet.
+
+BAD challenge (spoon-fed): Explanation shows how --bg and --text CSS variables work. Challenge says "add a --gold variable". The answer is obvious from reading the explanation.
+
+GOOD challenge (requires thinking): Explanation shows how --bg and --text CSS variables work. Challenge presents a broken component that uses a hardcoded color value and asks the user to refactor it to use the variable system — a task that requires understanding, not copying.
+
+Rules for every challenge:
+1. The starterCode must have a REAL problem to solve — broken code, missing piece, or wrong approach — not just a comment saying "add X here"
+2. The challenge scenario must be slightly different from the explanation example so the user can't just copy-paste
+3. The hint should nudge toward the right approach without giving the answer
+4. The solution should be meaningfully different from the starterCode (not just filling in one word)
+5. Never put the answer inside the explanation content — teach the concept, don't give the solution
 
 Return ONLY valid JSON matching this exact TypeScript interface — no markdown, no explanation:
 
