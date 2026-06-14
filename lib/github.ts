@@ -142,16 +142,16 @@ export function buildRepoSummary(repo: ParsedRepo): string {
     const f = repo.files.find(f => f.path === p || f.path.endsWith("/" + p))
     if (f) {
       lines.push(`--- ${f.path} ---`)
-      lines.push(f.content.slice(0, 3000))
+      lines.push(f.content.slice(0, 2000))
       lines.push("")
     }
   }
 
-  // Remaining files (truncated)
+  // Remaining files
   const rest = repo.files.filter(f => !priority.some(p => f.path === p || f.path.endsWith("/" + p)))
-  for (const f of rest.slice(0, 40)) {
+  for (const f of rest.slice(0, 35)) {
     lines.push(`--- ${f.path} ---`)
-    lines.push(f.content.slice(0, 1500))
+    lines.push(f.content.slice(0, 1000))
     lines.push("")
   }
 

@@ -6,101 +6,89 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-const CURRICULUM_PROMPT = `You are an expert programming educator. Your job is to analyze a real codebase and generate a personalized, step-by-step learning curriculum based on what the developer actually built.
+// Haiku-optimised prompt: very directive, concrete examples, zero ambiguity.
+// Haiku follows explicit instructions extremely well — it just needs them spelled out.
+const CURRICULUM_PROMPT = `You are a senior programming educator. Analyze the provided codebase and output a personalized learning curriculum as JSON.
 
-The key philosophy: the learner built this project (possibly with AI help) and now wants to understand what they built. Every lesson must reference their ACTUAL code — not generic examples.
+MISSION: The learner built this project (possibly with AI) and wants to truly understand it. Every lesson must be grounded in THEIR actual code — file paths, function names, real snippets. No generic filler.
 
-You will receive a repository summary. Analyze it and return a curriculum JSON object.
+═══ OUTPUT FORMAT ═══
+Return ONLY a valid JSON object. No markdown, no explanation, no code fences. Start with { and end with }.
 
-RULES:
-- Extract what the dev actually used (don't invent tools they didn't use)
-- Every lesson's codeSnippet must be real code from their files
-- Lessons should teach progressively — start with the most foundational concepts
-- The tone should be encouraging: "You built X — here's what it actually does"
-- Be specific: reference actual file paths and function names from their code
-- Group related concepts into modules (aim for 4-8 modules, 2-4 lessons each)
-
-CRITICAL — CHALLENGE DESIGN (this is the most important rule):
-The explanation and the challenge must test DIFFERENT things. The explanation teaches the concept using their existing code. The challenge asks the user to APPLY that concept in a new, slightly different scenario they haven't seen yet.
-
-BAD challenge (spoon-fed): Explanation shows how --bg and --text CSS variables work. Challenge says "add a --gold variable". The answer is obvious from reading the explanation.
-
-GOOD challenge (requires thinking): Explanation shows how --bg and --text CSS variables work. Challenge presents a broken component that uses a hardcoded color value and asks the user to refactor it to use the variable system — a task that requires understanding, not copying.
-
-Rules for every challenge:
-1. The starterCode must have a REAL problem to solve — broken code, missing piece, or wrong approach — not just a comment saying "add X here"
-2. The challenge scenario must be slightly different from the explanation example so the user can't just copy-paste
-3. The hint should nudge toward the right approach without giving the answer
-4. The solution should be meaningfully different from the starterCode (not just filling in one word)
-5. Never put the answer inside the explanation content — teach the concept, don't give the solution
-6. The "instructions" field must NEVER contain: exact variable names from the solution, specific values to copy, or step-by-step procedures that lead directly to the answer. Instructions should describe the GOAL and the CONTEXT, not the method. Bad: "Add --gold: #f5a623 to :root". Good: "Your site uses a color variable system. Add a brand accent color that works in both light and dark themes, then apply it to the .highlight element."
-7. The "question" field should be a single clear sentence describing what to accomplish — not how to do it
-
-Return ONLY valid JSON matching this exact TypeScript interface — no markdown, no explanation:
-
+Schema:
 {
   "projectName": string,
-  "techStack": {
-    "framework": string,
-    "language": string,
-    "database": string | null,
-    "auth": string | null,
-    "styling": string | null,
-    "deployment": string | null,
-    "other": string[]
-  },
-  "difficulty": "beginner" | "intermediate" | "advanced",
-  "summary": string, // 2 sentences: what the project does + what makes it interesting to learn from
+  "techStack": { "framework": string, "language": string, "database": string|null, "auth": string|null, "styling": string|null, "deployment": string|null, "other": string[] },
+  "difficulty": "beginner"|"intermediate"|"advanced",
+  "summary": string,
   "estimatedHours": number,
-  "modules": [
-    {
-      "id": "mod_1",
+  "modules": [{
+    "id": "mod_1",
+    "title": string,
+    "description": string,
+    "icon": string,
+    "difficulty": "beginner"|"intermediate"|"advanced",
+    "concepts": string[],
+    "lessons": [{
+      "id": "les_1_1",
       "title": string,
-      "description": string,
-      "icon": string, // single emoji
-      "difficulty": "beginner" | "intermediate" | "advanced",
-      "concepts": string[], // e.g. ["supabase-auth", "rls-policies"]
-      "lessons": [
-        {
-          "id": "les_1_1",
-          "title": string,
-          "type": "explanation" | "challenge",
-          "content": string, // markdown — explain what this concept does IN THEIR PROJECT, reference specific code
-          "codeReference": string | null, // file path like "app/auth/login/page.tsx"
-          "codeSnippet": string | null, // actual code snippet from their project (max 20 lines)
-          "challenge": {
-            "question": string,
-            "instructions": string,
-            "starterCode": string,
-            "solution": string,
-            "hint": string,
-            "xp": number
-          } | null,
-          "xp": number
-        }
-      ],
-      "totalXp": number
-    }
-  ]
-}`
+      "type": "explanation"|"challenge",
+      "content": string,
+      "codeReference": string|null,
+      "codeSnippet": string|null,
+      "challenge": { "question": string, "instructions": string, "starterCode": string, "solution": string, "hint": string, "xp": number }|null,
+      "xp": number
+    }],
+    "totalXp": number
+  }]
+}
+
+═══ CONTENT RULES ═══
+
+LESSONS — "content" field:
+- 3-5 paragraphs. Explain what this concept is, then show exactly how the learner used it in their project.
+- Always name the specific file (e.g. "In your `auth.js`...") and quote actual code inline using backticks.
+- Tone: "You built X — here's what it actually does and why it matters."
+- NEVER include the challenge answer in the lesson content.
+
+MODULES — aim for 5-7 modules, 2-3 lessons each. Progress from foundational → advanced.
+
+═══ CHALLENGE RULES (read carefully) ═══
+
+Every challenge must follow this formula:
+  LESSON teaches concept using code from their project.
+  CHALLENGE tests understanding by presenting a NEW scenario using the same concept.
+
+The gap between explanation and challenge is what creates learning. If you can solve the challenge by copy-pasting from the explanation, it's too easy.
+
+GOOD challenge anatomy:
+  question: One sentence — what to accomplish, not how. ("Refactor this component to use the variable system.")
+  instructions: 2-3 sentences — context only. Describe the GOAL and WHY, never the method or exact values.
+  starterCode: Broken/incomplete code with a real problem to solve. NOT just a comment placeholder.
+  solution: Complete working code, meaningfully different from starterCode.
+  hint: One sentence steering toward the right approach without revealing it. ("Think about where CSS variables are declared vs where they're used.")
+  xp: 25-75 based on difficulty.
+
+BAD instructions (never do this): "Add the variable --gold: #f5a623 to :root and use it in .highlight"
+GOOD instructions (do this): "Your color system uses CSS variables for theming. Add a new brand color that respects both light and dark mode, then wire it up to the highlight element."
+
+═══ STACK DETECTION ═══
+Only include technologies you actually see evidence of in the code. Do not guess or invent.`
 
 export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> {
   const repoSummary = buildRepoSummary(repo)
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 16000,
-    // No thinking — this is structured JSON generation, not reasoning.
-    // Thinking blocks consume token budget and leave nothing for the output.
+    model: "claude-haiku-4-5",
+    max_tokens: 8000,
     messages: [
       {
         role: "user",
-        content: `${CURRICULUM_PROMPT}\n\n=== REPOSITORY TO ANALYZE ===\n\n${repoSummary}`,
+        content: `${CURRICULUM_PROMPT}\n\n=== REPOSITORY ===\n\n${repoSummary}`,
       },
     ],
   })
 
-  // Extract text from response
   const textBlock = response.content.find(b => b.type === "text")
   if (!textBlock || textBlock.type !== "text") {
     throw new Error("Claude returned no text content")
@@ -108,13 +96,13 @@ export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> 
 
   let raw = textBlock.text.trim()
 
-  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  // Strip any accidental markdown fences
   if (raw.includes("```")) {
     const fenceMatch = raw.match(/```(?:json)?\n?([\s\S]*?)\n?```/)
     if (fenceMatch) raw = fenceMatch[1].trim()
   }
 
-  // Find the outermost JSON object if there's surrounding text
+  // Extract outermost JSON object if surrounded by text
   if (!raw.startsWith("{")) {
     const jsonStart = raw.indexOf("{")
     const jsonEnd = raw.lastIndexOf("}")
@@ -128,20 +116,17 @@ export async function generateCurriculum(repo: ParsedRepo): Promise<Curriculum> 
     parsed = JSON.parse(raw)
   } catch {
     throw new Error(
-      `Claude returned invalid JSON. This sometimes happens on very large repos — try again or use a smaller repo. Preview: ${raw.slice(0, 300)}`
+      `Failed to parse curriculum JSON. Try again — large repos occasionally hit this. Preview: ${raw.slice(0, 300)}`
     )
   }
 
-  // Calculate totalXp
   const totalXp = parsed.modules.reduce((sum, m) => sum + m.totalXp, 0)
 
-  const curriculum: Curriculum = {
+  return {
     id: crypto.randomUUID(),
     projectUrl: `https://github.com/${repo.owner}/${repo.repo}`,
     totalXp,
     generatedAt: new Date().toISOString(),
     ...parsed,
   }
-
-  return curriculum
 }
