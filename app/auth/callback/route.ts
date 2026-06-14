@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
@@ -8,16 +7,20 @@ export async function GET(req: NextRequest) {
   const next = searchParams.get("next") ?? "/"
 
   if (code) {
-    const cookieStore = await cookies()
+    // Build the redirect response first so we can write cookies onto it
+    const response = NextResponse.redirect(`${origin}${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll: () => cookieStore.getAll(),
+          // Read from the incoming request
+          getAll: () => req.cookies.getAll(),
+          // Write onto the outgoing response
           setAll: (cookiesToSet) => {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              response.cookies.set(name, value, options)
             )
           },
         },
@@ -25,9 +28,7 @@ export async function GET(req: NextRequest) {
     )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
+    if (!error) return response
   }
 
   return NextResponse.redirect(`${origin}/?error=auth_failed`)
